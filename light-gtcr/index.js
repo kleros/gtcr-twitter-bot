@@ -41,7 +41,6 @@ async function bot(
   } catch (err) {
     if (err.type !== 'NotFoundError') throw new Error(err)
   }
-
   Object.keys(arbitrators)
     .map(address => new ethers.Contract(address, _IArbitrator, provider))
     .forEach(arbitrator =>
@@ -65,7 +64,6 @@ async function bot(
     60 / (process.env.BLOCK_TIME_MILLISECONDS / 1000)
   )
   const blocksPerRequest = blocksPerMinute * 60 * 24 * 30 * 4
-
   // Fetch the addresses of TCRs deployed with this factory.
   const logPromises = []
   for (let fromBlock = deploymentBlock; ; ) {
@@ -88,6 +86,7 @@ async function bot(
     .map(
       address => new ethers.Contract(address, _LightGeneralizedTCR, provider)
     )
+  console.log('error above in xDai chain')
 
   // Add listeners for events emitted by the TCRs.
   await Promise.all(

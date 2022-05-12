@@ -8,9 +8,8 @@ const _GeneralizedTCRView = require('./abis/GeneralizedTCRView.json')
 const _LightGTCRFactory = require('./abis/LightGTCRFactory.json')
 const _LightGeneralizedTCRView = require('./abis/LightGeneralizedTCRView.json')
 
-const gtcrBot = require('./gtcr')
-// Light curate is the process of being deprecated in favor slot curate.
-// const lightGtcrBot = require('./light-gtcr')
+// const gtcrBot = require('./gtcr')
+const lightGtcrBot = require('./light-gtcr')
 
 const db = level('./db')
 let twitterClient
@@ -27,32 +26,79 @@ if (
     access_token_secret: process.env.ACCESS_TOKEN_SECRET
   })
 
-const provider = new ethers.providers.JsonRpcProvider(process.env.PROVIDER_URL)
-provider.pollingInterval = 60 * 1000 // Poll every minute.
+const NETWORKS = Object.freeze({
+  ethereum: 1,
+  xDai: 100
+})
 
-const gtcrFactory = new ethers.Contract(
-  process.env.FACTORY_ADDRESS,
-  _GTCRFactory,
-  provider
+const providerUrls = JSON.parse(process.env.PROVIDER_URLS)
+
+const providerMainnet = new ethers.providers.JsonRpcProvider(
+  providerUrls[NETWORKS.ethereum]
+)
+const providerXDai = new ethers.providers.JsonRpcProvider(
+  providerUrls[NETWORKS.xDai]
+)
+providerMainnet.pollingInterval = 60 * 1000 // Poll every minute.
+providerXDai.pollingInterval = 60 * 1000 // Poll every minute.
+
+// const factoryAddresses = JSON.parse(process.env.FACTORY_ADDRESSES)
+
+// const gtrcViewAddresses = JSON.parse(process.env.GENERALIZED_TCR_VIEW_ADDRESSES)
+
+const lFactoryAddresses = JSON.parse(process.env.LFACTORY_ADDRESSES)
+
+const lGtrcViewAddresses = JSON.parse(
+  process.env.LGENERALIZED_TCR_VIEW_ADDRESSES
 )
 
-const gtcrView = new ethers.Contract(
-  process.env.GENERALIZED_TCR_VIEW_ADDRESS,
-  _GeneralizedTCRView,
-  provider
+// const gtcrFactoryMainnet = new ethers.Contract(
+//   factoryAddresses[NETWORKS.ethereum],
+//   _GTCRFactory,
+//   providerMainnet
+// )
+
+// const gtcrFactoryXDai = new ethers.Contract(
+//   factoryAddresses[NETWORKS.xDai],
+//   _GTCRFactory,
+//   providerXDai
+// )
+
+// const gtcrViewMainnet = new ethers.Contract(
+//   gtrcViewAddresses[NETWORKS.ethereum],
+//   _GeneralizedTCRView,
+//   providerMainnet
+// )
+
+// const gtcrViewXDai = new ethers.Contract(
+//   gtrcViewAddresses[NETWORKS.xDai],
+//   _GeneralizedTCRView,
+//   providerXDai
+// )
+
+const lightGtcrFactoryMainnet = new ethers.Contract(
+  lFactoryAddresses[NETWORKS.ethereum],
+  _LightGTCRFactory,
+  providerMainnet
 )
 
-// const lightGtcrFactory = new ethers.Contract(
-//   process.env.LFACTORY_ADDRESS,
-//   _LightGTCRFactory,
-//   provider
-// )
+const lightGtcrFactoryXDai = new ethers.Contract(
+  lFactoryAddresses[NETWORKS.xDai],
+  _LightGTCRFactory,
+  providerXDai
+)
 
-// const lightGtcrView = new ethers.Contract(
-//   process.env.LGENERALIZED_TCR_VIEW_ADDRESS,
-//   _LightGeneralizedTCRView,
-//   provider
-// )
+const lightGtcrViewMainnet = new ethers.Contract(
+  lGtrcViewAddresses[NETWORKS.ethereum],
+  _LightGeneralizedTCRView,
+  providerMainnet
+)
+
+const lightGtcrViewXDai = new ethers.Contract(
+  lGtrcViewAddresses[NETWORKS.xDai],
+  _LightGeneralizedTCRView,
+  providerXDai
+)
 
 ;(async () => {
   console.info('Instantiating bitly client:', process.env.BITLY_TOKEN)
@@ -87,13 +133,36 @@ const gtcrView = new ethers.Contract(
       }`
   }
 
-  gtcrBot(provider, gtcrFactory, twitterClient, gtcrView, db, bitly)
-  // lightGtcrBot(
-  //   provider,
-  //   lightGtcrFactory,
+  // // initialize gtrcBot for Mainnet
+  // gtcrBot(
+  //   providerMainnet,
+  //   gtcrFactoryMainnet,
   //   twitterClient,
-  //   lightGtcrView,
+  //   gtcrViewMainnet,
   //   db,
   //   bitly
   // )
+
+  // // initialize gtrcBot for xDai chain
+  // gtcrBot(providerXDai, gtcrFactoryXDai, twitterClient, gtcrViewXDai, db, bitly)
+
+  // initialize gtrcBot for Mainnet
+  lightGtcrBot(
+    providerMainnet,
+    lightGtcrFactoryMainnet,
+    twitterClient,
+    lightGtcrViewMainnet,
+    db,
+    bitly
+  )
+
+  // initialize gtrcBot for xDai chain
+  lightGtcrBot(
+    providerXDai,
+    lightGtcrFactoryXDai,
+    twitterClient,
+    lightGtcrViewXDai,
+    db,
+    bitly
+  )
 })()

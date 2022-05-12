@@ -34,10 +34,23 @@ module.exports = ({
       }
     `
   }
-  const response = await fetch(process.env.GTCR_SUBGRAPH_URL, {
-    method: 'POST',
-    body: JSON.stringify(subgraphQuery)
+  const NETWORKS = Object.freeze({
+    ethereum: 1,
+    xDai: 100
   })
+  let response
+  const gtrcSubgraphUrls = JSON.parse(process.env.GTCR_SUBGRAPH_URLS)
+  if (network.chainId === 1)
+    response = await fetch(gtrcSubgraphUrls[NETWORKS.ethereum], {
+      method: 'POST',
+      body: JSON.stringify(subgraphQuery)
+    })
+  else if (network.chainId === 100)
+    response = await fetch(gtrcSubgraphUrls[NETWORKS.xDai], {
+      method: 'POST',
+      body: JSON.stringify(subgraphQuery)
+    })
+
   const parsedValues = await response.json()
   const { data } = parsedValues || {}
   const { lrequests } = data || {}
@@ -66,7 +79,9 @@ module.exports = ({
     const tweet = await twitterClient.post('statuses/update', {
       status: message
     })
+    console.log(network.chainId)
 
     await db.put(`${network.chainId}-${tcr.address}-${_itemID}`, tweet.id_str)
+    console.log('and finally saved to database successfully')
   }
 }
