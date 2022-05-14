@@ -30,22 +30,11 @@ module.exports = ({
       }
     `
   }
-  const NETWORKS = Object.freeze({
-    ethereum: 1,
-    xDai: 100
-  })
-  let response
   const gtrcSubgraphUrls = JSON.parse(process.env.GTCR_SUBGRAPH_URLS)
-  if (network.chainId === 1)
-    response = await fetch(gtrcSubgraphUrls[NETWORKS.ethereum], {
-      method: 'POST',
-      body: JSON.stringify(subgraphQuery)
-    })
-  else if (network.chainId === 100)
-    response = await fetch(gtrcSubgraphUrls[NETWORKS.xDai], {
-      method: 'POST',
-      body: JSON.stringify(subgraphQuery)
-    })
+  const response = await fetch(gtrcSubgraphUrls[network.chainId], {
+    method: 'POST',
+    body: JSON.stringify(subgraphQuery)
+  })
   const parsedValues = await response.json()
   const { data } = parsedValues || {}
   const { lrequests } = data || {}
@@ -60,7 +49,9 @@ module.exports = ({
   } = tcrMetaEvidence
 
   const [shortenedLink, tweetID] = await Promise.all([
-    bitly.shorten(`${process.env.GTCR_UI_URL}/tcr/${tcr.address}/${itemID}`),
+    bitly.shorten(
+      `${process.env.GTCR_UI_URL}/tcr/${network.chainId}/${tcr.address}/${itemID}`
+    ),
     db.get(`${network.chainId}-${tcr.address}-${itemID}`)
   ])
 

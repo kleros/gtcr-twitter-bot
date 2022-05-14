@@ -7,7 +7,9 @@ module.exports = ({ tcr, twitterClient, bitly, db, network }) => async (
   side
 ) => {
   const [shortenedLink, tweetID] = await Promise.all([
-    bitly.shorten(`${process.env.GTCR_UI_URL}/tcr/${tcr.address}/${itemID}`),
+    bitly.shorten(
+      `${process.env.GTCR_UI_URL}/tcr/${network.chainId}/${tcr.address}/${itemID}`
+    ),
     db.get(`${network.chainId}-${tcr.address}-${itemID}`)
   ])
 

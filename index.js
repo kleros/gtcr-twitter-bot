@@ -8,7 +8,7 @@ const _GeneralizedTCRView = require('./abis/GeneralizedTCRView.json')
 const _LightGTCRFactory = require('./abis/LightGTCRFactory.json')
 const _LightGeneralizedTCRView = require('./abis/LightGeneralizedTCRView.json')
 
-// const gtcrBot = require('./gtcr')
+const gtcrBot = require('./gtcr')
 const lightGtcrBot = require('./light-gtcr')
 
 const db = level('./db')
@@ -28,7 +28,8 @@ if (
 
 const NETWORKS = Object.freeze({
   ethereum: 1,
-  xDai: 100
+  xDai: 100,
+  kovan: 42
 })
 
 const providerUrls = JSON.parse(process.env.PROVIDER_URLS)
@@ -39,12 +40,16 @@ const providerMainnet = new ethers.providers.JsonRpcProvider(
 const providerXDai = new ethers.providers.JsonRpcProvider(
   providerUrls[NETWORKS.xDai]
 )
+const providerKovan = new ethers.providers.JsonRpcProvider(
+  providerUrls[NETWORKS.kovan]
+)
 providerMainnet.pollingInterval = 60 * 1000 // Poll every minute.
 providerXDai.pollingInterval = 60 * 1000 // Poll every minute.
+providerKovan.pollingInterval = 60 * 1000 // Poll every minute
 
-// const factoryAddresses = JSON.parse(process.env.FACTORY_ADDRESSES)
+const factoryAddresses = JSON.parse(process.env.FACTORY_ADDRESSES)
 
-// const gtrcViewAddresses = JSON.parse(process.env.GENERALIZED_TCR_VIEW_ADDRESSES)
+const gtrcViewAddresses = JSON.parse(process.env.GENERALIZED_TCR_VIEW_ADDRESSES)
 
 const lFactoryAddresses = JSON.parse(process.env.LFACTORY_ADDRESSES)
 
@@ -52,29 +57,29 @@ const lGtrcViewAddresses = JSON.parse(
   process.env.LGENERALIZED_TCR_VIEW_ADDRESSES
 )
 
-// const gtcrFactoryMainnet = new ethers.Contract(
-//   factoryAddresses[NETWORKS.ethereum],
-//   _GTCRFactory,
-//   providerMainnet
-// )
+const gtcrFactoryMainnet = new ethers.Contract(
+  factoryAddresses[NETWORKS.ethereum],
+  _GTCRFactory,
+  providerMainnet
+)
 
-// const gtcrFactoryXDai = new ethers.Contract(
-//   factoryAddresses[NETWORKS.xDai],
-//   _GTCRFactory,
-//   providerXDai
-// )
+const gtcrFactoryXDai = new ethers.Contract(
+  factoryAddresses[NETWORKS.xDai],
+  _GTCRFactory,
+  providerXDai
+)
 
-// const gtcrViewMainnet = new ethers.Contract(
-//   gtrcViewAddresses[NETWORKS.ethereum],
-//   _GeneralizedTCRView,
-//   providerMainnet
-// )
+const gtcrViewMainnet = new ethers.Contract(
+  gtrcViewAddresses[NETWORKS.ethereum],
+  _GeneralizedTCRView,
+  providerMainnet
+)
 
-// const gtcrViewXDai = new ethers.Contract(
-//   gtrcViewAddresses[NETWORKS.xDai],
-//   _GeneralizedTCRView,
-//   providerXDai
-// )
+const gtcrViewXDai = new ethers.Contract(
+  gtrcViewAddresses[NETWORKS.xDai],
+  _GeneralizedTCRView,
+  providerXDai
+)
 
 const lightGtcrFactoryMainnet = new ethers.Contract(
   lFactoryAddresses[NETWORKS.ethereum],
@@ -134,19 +139,19 @@ const lightGtcrViewXDai = new ethers.Contract(
   }
 
   // // initialize gtrcBot for Mainnet
-  // gtcrBot(
-  //   providerMainnet,
-  //   gtcrFactoryMainnet,
-  //   twitterClient,
-  //   gtcrViewMainnet,
-  //   db,
-  //   bitly
-  // )
+  gtcrBot(
+    providerMainnet,
+    gtcrFactoryMainnet,
+    twitterClient,
+    gtcrViewMainnet,
+    db,
+    bitly
+  )
 
-  // // initialize gtrcBot for xDai chain
-  // gtcrBot(providerXDai, gtcrFactoryXDai, twitterClient, gtcrViewXDai, db, bitly)
+  // // initialize gtrcBot for Gnosis chain
+  gtcrBot(providerXDai, gtcrFactoryXDai, twitterClient, gtcrViewXDai, db, bitly)
 
-  // initialize gtrcBot for Mainnet
+  // initialize lGtrcBot for Mainnet
   lightGtcrBot(
     providerMainnet,
     lightGtcrFactoryMainnet,
@@ -156,7 +161,7 @@ const lightGtcrViewXDai = new ethers.Contract(
     bitly
   )
 
-  // initialize gtrcBot for xDai chain
+  // initialize lGtrcBot for Gnosis chain
   lightGtcrBot(
     providerXDai,
     lightGtcrFactoryXDai,

@@ -25,7 +25,7 @@ async function bot(provider, gtcrFactory, twitterClient, gtcrView, db, bitly) {
   ])
 
   console.info(`Connected to ${network.name} of chain of ID ${network.chainId}`)
-  console.info(`GTCR Factory deployed at ${process.env.FACTORY_ADDRESS}`)
+  console.info(`GTCR Factory deployed at ${gtcrFactory.address}`)
 
   // Add arbitrator listeners.
   let arbitrators = {}
@@ -48,20 +48,32 @@ async function bot(provider, gtcrFactory, twitterClient, gtcrView, db, bitly) {
       })
     )
 
+  const factoryBlockNums = JSON.parse(process.env.FACTORY_BLOCK_NUMS)
   // Fetch all TCR addresses from factory logs, instantiate and add
   // event listeners.
-  const deploymentBlock = Number(process.env.FACTORY_BLOCK_NUM) || 0
+  const deploymentBlock = Number(factoryBlockNums[network.chainId]) || 0
 
+  const blockTimeMilliseconds = JSON.parse(process.env.BLOCK_TIME_MILLISECONDS)
   // Fetch logs by scanning the blockchain in batches of 4 months
   // to avoid rate-limiting.
   const blocksPerMinute = Math.floor(
-    60 / (process.env.BLOCK_TIME_MILLISECONDS / 1000)
+    60 / (Number(blockTimeMilliseconds[network.chainId]) / 1000)
   )
   const blocksPerRequest = blocksPerMinute * 60 * 24 * 30 * 4
 
   // Fetch the addresses of TCRs deployed with this factory.
   const logPromises = []
   for (let fromBlock = deploymentBlock; ; ) {
+    if (fromBlock + blocksPerRequest >= currBlock) {
+      logPromises.push(
+        provider.getLogs({
+          ...gtcrFactory.filters.NewGTCR(),
+          fromBlock: fromBlock,
+          toBlock: currBlock
+        })
+      )
+      break
+    }
     logPromises.push(
       provider.getLogs({
         ...gtcrFactory.filters.NewGTCR(),
@@ -69,8 +81,6 @@ async function bot(provider, gtcrFactory, twitterClient, gtcrView, db, bitly) {
         toBlock: fromBlock + blocksPerRequest
       })
     )
-
-    if (fromBlock + blocksPerRequest >= currBlock) break
     fromBlock += blocksPerRequest
   }
 

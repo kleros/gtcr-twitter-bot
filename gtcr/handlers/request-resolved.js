@@ -15,7 +15,9 @@ module.exports = ({
     metadata: { itemName, tcrTitle }
   } = tcrMetaEvidence
   const [shortenedLink, itemInfo, tweetID] = await Promise.all([
-    bitly.shorten(`${process.env.GTCR_UI_URL}/tcr/${tcr.address}/${_itemID}`),
+    bitly.shorten(
+      `${process.env.GTCR_UI_URL}/tcr/${network.chainId}/${tcr.address}/${_itemID}`
+    ),
     tcr.getItemInfo(_itemID),
     db.get(`${network.chainId}-${tcr.address}-${_itemID}`)
   ])

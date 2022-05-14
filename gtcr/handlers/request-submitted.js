@@ -18,7 +18,7 @@ module.exports = ({
   } = tcrArbitrableData
 
   const shortenedLink = await bitly.shorten(
-    `${process.env.GTCR_UI_URL}/tcr/${tcr.address}/${_itemID}`
+    `${process.env.GTCR_UI_URL}/tcr/${network.chainId}/${tcr.address}/${_itemID}`
   )
 
   const depositETH = truncateETHValue(
@@ -26,7 +26,16 @@ module.exports = ({
       ? submissionBaseDeposit
       : removalBaseDeposit
   )
-  const message = `Someone ${
+
+  // eslint-disable-next-line unicorn/consistent-function-scoping
+  const networkChainName = chainId => {
+    if (chainId === 1) return 'Mainnet'
+    if (chainId === 100) return 'Gnosis'
+    if (chainId === 42) return 'Kovan'
+    return 'unknown chain'
+  }
+
+  const message = `(${networkChainName(network.chainId)}) \n\nSomeone ${
     _requestType === ITEM_STATUS.SUBMITTED
       ? 'submitted'
       : 'requested the removal of'

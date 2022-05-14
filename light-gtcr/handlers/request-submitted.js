@@ -20,7 +20,7 @@ module.exports = ({
   } = tcrArbitrableData
 
   const shortenedLink = await bitly.shorten(
-    `${process.env.GTCR_UI_URL}/tcr/${tcr.address}/${_itemID}`
+    `${process.env.GTCR_UI_URL}/tcr/${network.chainId}/${tcr.address}/${_itemID}`
   )
 
   // Wait a bit to ensure subgraph is synced.
@@ -34,22 +34,11 @@ module.exports = ({
       }
     `
   }
-  const NETWORKS = Object.freeze({
-    ethereum: 1,
-    xDai: 100
-  })
-  let response
   const gtrcSubgraphUrls = JSON.parse(process.env.GTCR_SUBGRAPH_URLS)
-  if (network.chainId === 1)
-    response = await fetch(gtrcSubgraphUrls[NETWORKS.ethereum], {
-      method: 'POST',
-      body: JSON.stringify(subgraphQuery)
-    })
-  else if (network.chainId === 100)
-    response = await fetch(gtrcSubgraphUrls[NETWORKS.xDai], {
-      method: 'POST',
-      body: JSON.stringify(subgraphQuery)
-    })
+  const response = await fetch(gtrcSubgraphUrls[network.chainId], {
+    method: 'POST',
+    body: JSON.stringify(subgraphQuery)
+  })
 
   const parsedValues = await response.json()
   const { data } = parsedValues || {}
@@ -64,7 +53,16 @@ module.exports = ({
       ? submissionBaseDeposit
       : removalBaseDeposit
   )
-  const message = `Someone ${
+
+  // eslint-disable-next-line unicorn/consistent-function-scoping
+  const networkChainName = chainId => {
+    if (chainId === 1) return 'Mainnet'
+    if (chainId === 100) return 'Gnosis'
+    if (chainId === 42) return 'Kovan'
+    return 'unknown chain'
+  }
+
+  const message = `(${networkChainName(network.chainId)}) \n\nSomeone ${
     requestType === 'RegistrationRequested'
       ? 'submitted'
       : 'requested the removal of'
@@ -79,9 +77,7 @@ module.exports = ({
     const tweet = await twitterClient.post('statuses/update', {
       status: message
     })
-    console.log(network.chainId)
 
     await db.put(`${network.chainId}-${tcr.address}-${_itemID}`, tweet.id_str)
-    console.log('and finally saved to database successfully')
   }
 }
