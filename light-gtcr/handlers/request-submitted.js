@@ -2,6 +2,8 @@ const fetch = require('node-fetch')
 const delay = require('delay')
 
 const { articleFor, truncateETHValue } = require('../../utils/string')
+const { submitTweet } = require('../../utils/submit-tweet')
+const { networks } = require('../../utils/networks')
 
 module.exports = ({
   tcr,
@@ -20,7 +22,7 @@ module.exports = ({
   } = tcrArbitrableData
 
   const shortenedLink = await bitly.shorten(
-    `${process.env.GTCR_UI_URL}/tcr/${tcr.address}/${_itemID}`
+    `${process.env.GTCR_UI_URL}/tcr/${network.chainId}/${tcr.address}/${_itemID}`
   )
 
   // Wait a bit to ensure subgraph is synced.
@@ -34,10 +36,12 @@ module.exports = ({
       }
     `
   }
-  const response = await fetch(process.env.GTCR_SUBGRAPH_URL, {
+  const gtrcSubgraphUrls = JSON.parse(process.env.GTCR_SUBGRAPH_URLS)
+  const response = await fetch(gtrcSubgraphUrls[network.chainId], {
     method: 'POST',
     body: JSON.stringify(subgraphQuery)
   })
+
   const parsedValues = await response.json()
   const { data } = parsedValues || {}
   const { lrequests } = data || {}
@@ -51,22 +55,28 @@ module.exports = ({
       ? submissionBaseDeposit
       : removalBaseDeposit
   )
+
+  // todo itemName could make message too large
   const message = `Someone ${
     requestType === 'RegistrationRequested'
       ? 'submitted'
       : 'requested the removal of'
   } ${articleFor(itemName)} ${itemName} ${
     requestType === 'RegistrationRequested' ? 'to' : 'from'
-  } ${tcrTitle}. Verify it for a chance to win ${depositETH} #ETH
-      \n\nListing: ${shortenedLink}`
+  } ${tcrTitle}, a list in ${
+    networks[network.chainId].name
+  }. Verify it for a chance to win ${depositETH} #${
+    networks[network.chainId].currency
+  }\n\nListing: ${shortenedLink}`
 
   console.info(message)
 
-  if (twitterClient) {
-    const tweet = await twitterClient.post('statuses/update', {
-      status: message
-    })
-
-    await db.put(`${network.chainId}-${tcr.address}-${_itemID}`, tweet.id_str)
-  }
+  // there is no tweetID because this is the first message, so it's null
+  await submitTweet(
+    null,
+    message,
+    db,
+    twitterClient,
+    `${network.chainId}-${tcr.address}-${_itemID}`
+  )
 }

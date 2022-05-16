@@ -41,7 +41,6 @@ async function bot(
   } catch (err) {
     if (err.type !== 'NotFoundError') throw new Error(err)
   }
-
   Object.keys(arbitrators)
     .map(address => new ethers.Contract(address, _IArbitrator, provider))
     .forEach(arbitrator =>
@@ -55,20 +54,31 @@ async function bot(
       })
     )
 
+  const lFactoryBlockNums = JSON.parse(process.env.LFACTORY_BLOCK_NUMS)
   // Fetch all TCR addresses from factory logs, instantiate and add
   // event listeners.
-  const deploymentBlock = Number(process.env.LFACTORY_BLOCK_NUM) || 0
+  const deploymentBlock = Number(lFactoryBlockNums[network.chainId]) || 0
 
+  const blockTimeMilliseconds = JSON.parse(process.env.BLOCK_TIME_MILLISECONDS)
   // Fetch logs by scanning the blockchain in batches of 4 months
   // to avoid rate-limiting.
   const blocksPerMinute = Math.floor(
-    60 / (process.env.BLOCK_TIME_MILLISECONDS / 1000)
+    60 / (Number(blockTimeMilliseconds[network.chainId]) / 1000)
   )
   const blocksPerRequest = blocksPerMinute * 60 * 24 * 30 * 4
-
   // Fetch the addresses of TCRs deployed with this factory.
   const logPromises = []
   for (let fromBlock = deploymentBlock; ; ) {
+    if (fromBlock + blocksPerRequest >= currBlock) {
+      logPromises.push(
+        provider.getLogs({
+          ...lightGtcrFactory.filters.NewGTCR(),
+          fromBlock: fromBlock,
+          toBlock: currBlock
+        })
+      )
+      break
+    }
     logPromises.push(
       provider.getLogs({
         ...lightGtcrFactory.filters.NewGTCR(),
@@ -76,8 +86,6 @@ async function bot(
         toBlock: fromBlock + blocksPerRequest
       })
     )
-
-    if (fromBlock + blocksPerRequest >= currBlock) break
     fromBlock += blocksPerRequest
   }
 

@@ -2,9 +2,16 @@ const _IArbitrator = require('../../abis/IArbitrator.json')
 const ethers = require('ethers')
 
 const { ITEM_STATUS, ARBITRATORS } = require('../../utils/enums')
-const { truncateETHValue, articleFor } = require('../../utils/string')
+const {
+  truncateETHValue,
+  articleFor,
+  capitalizeFirstLetter
+} = require('../../utils/string')
 const appealPossibleHandler = require('./appeal-possible')
 const appealDecisionHandler = require('./appeal-decision')
+const { dbAttempt } = require('../../utils/db-attempt')
+const { submitTweet } = require('../../utils/submit-tweet')
+const { networks } = require('../../utils/networks')
 
 const {
   utils: { getAddress }
@@ -45,29 +52,31 @@ module.exports = ({
       : Number(removalBaseDeposit) + Number(removalChallengeBaseDeposit)
 
   const [shortenedLink, tweetID] = await Promise.all([
-    bitly.shorten(`${process.env.GTCR_UI_URL}/tcr/${tcr.address}/${itemID}`),
-    db.get(`${network.chainId}-${tcr.address}-${itemID}`)
+    bitly.shorten(
+      `${process.env.GTCR_UI_URL}/tcr/${network.chainId}/${tcr.address}/${itemID}`
+    ),
+    dbAttempt(`${network.chainId}-${tcr.address}-${itemID}`, db)
   ])
 
-  const message = `Challenge! ${articleFor(
-    itemName
-  ).toUpperCase()} ${itemName} ${
+  const message = `Challenge! ${capitalizeFirstLetter(
+    articleFor(itemName)
+  )} ${itemName} ${
     status === ITEM_STATUS.SUBMITTED ? 'submission' : 'removal'
-  } headed to court!
-      \n\nA total of ${truncateETHValue(ethAmount)} #ETH is at stake.
+  } headed to court in ${networks[network.chainId].name}!
+      \n\nA total of ${truncateETHValue(ethAmount)} #${
+    networks[network.chainId].currency
+  } is at stake.
       \n\nListing: ${shortenedLink}`
 
   console.info(message)
 
-  if (twitterClient) {
-    const tweet = await twitterClient.post('statuses/update', {
-      status: message,
-      in_reply_to_status_id: tweetID,
-      auto_populate_reply_metadata: true
-    })
-
-    await db.put(`${network.chainId}-${tcr.address}-${itemID}`, tweet.id_str)
-  }
+  await submitTweet(
+    tweetID,
+    message,
+    db,
+    twitterClient,
+    `${network.chainId}-${tcr.address}-${itemID}`
+  )
 
   const checksummedArbitratorAddr = getAddress(arbitratorAddress)
   let arbitrators = {}

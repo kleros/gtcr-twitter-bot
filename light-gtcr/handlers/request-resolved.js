@@ -3,6 +3,9 @@ const delay = require('delay')
 
 const { ITEM_STATUS } = require('../../utils/enums')
 const { capitalizeFirstLetter } = require('../../utils/string')
+const { dbAttempt } = require('../../utils/db-attempt')
+const { submitTweet } = require('../../utils/submit-tweet')
+const { networks } = require('../../utils/networks')
 
 module.exports = ({
   tcr,
@@ -27,7 +30,8 @@ module.exports = ({
       }
     `
   }
-  const response = await fetch(process.env.GTCR_SUBGRAPH_URL, {
+  const gtrcSubgraphUrls = JSON.parse(process.env.GTCR_SUBGRAPH_URLS)
+  const response = await fetch(gtrcSubgraphUrls[network.chainId], {
     method: 'POST',
     body: JSON.stringify(subgraphQuery)
   })
@@ -44,8 +48,10 @@ module.exports = ({
   const itemInfo = await tcr.getItemInfo(_itemID)
 
   const [shortenedLink, tweetID] = await Promise.all([
-    bitly.shorten(`${process.env.GTCR_UI_URL}/tcr/${tcr.address}/${_itemID}`),
-    db.get(`${network.chainId}-${tcr.address}-${_itemID}`)
+    bitly.shorten(
+      `${process.env.GTCR_UI_URL}/tcr/${network.chainId}/${tcr.address}/${_itemID}`
+    ),
+    dbAttempt(`${network.chainId}-${tcr.address}-${_itemID}`, db)
   ])
 
   const { status } = itemInfo
@@ -53,18 +59,16 @@ module.exports = ({
     status === ITEM_STATUS.REGISTERED
       ? `${capitalizeFirstLetter(itemName)} accepted into the`
       : `${capitalizeFirstLetter(itemName)} removed from the`
-  } ${tcrTitle} List.
+  } ${tcrTitle} List in ${networks[network.chainId].name}.
     \n\nListing: ${shortenedLink}`
 
   console.info(message)
 
-  if (twitterClient) {
-    const tweet = await twitterClient.post('statuses/update', {
-      status: message,
-      in_reply_to_status_id: tweetID,
-      auto_populate_reply_metadata: true
-    })
-
-    await db.put(`${network.chainId}-${tcr.address}-${_itemID}`, tweet.id_str)
-  }
+  await submitTweet(
+    tweetID,
+    message,
+    db,
+    twitterClient,
+    `${network.chainId}-${tcr.address}-${_itemID}`
+  )
 }

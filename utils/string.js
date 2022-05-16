@@ -1,4 +1,4 @@
-const isVowel = c => ['a', 'e', 'i', 'o', 'u'].includes(c.toLowerCase())
+const isVowel = c => ['aiueo'].includes(c.toLowerCase())
 const truncateETHValue = (n, decimals = 2) =>
   String(n).slice(0, String(n).indexOf('.') + 1 + decimals)
 

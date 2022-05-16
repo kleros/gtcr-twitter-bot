@@ -1,5 +1,7 @@
 const { articleFor, truncateETHValue } = require('../../utils/string')
 const { ITEM_STATUS } = require('../../utils/enums')
+const { networks } = require('../../utils/networks')
+const { submitTweet } = require('../../utils/submit-tweet')
 
 module.exports = ({
   tcr,
@@ -18,7 +20,7 @@ module.exports = ({
   } = tcrArbitrableData
 
   const shortenedLink = await bitly.shorten(
-    `${process.env.GTCR_UI_URL}/tcr/${tcr.address}/${_itemID}`
+    `${process.env.GTCR_UI_URL}/tcr/${network.chainId}/${tcr.address}/${_itemID}`
   )
 
   const depositETH = truncateETHValue(
@@ -26,22 +28,27 @@ module.exports = ({
       ? submissionBaseDeposit
       : removalBaseDeposit
   )
+
+  // todo itemName could make message too large
   const message = `Someone ${
     _requestType === ITEM_STATUS.SUBMITTED
       ? 'submitted'
       : 'requested the removal of'
   } ${articleFor(itemName)} ${itemName} ${
     _requestType === ITEM_STATUS.SUBMITTED ? 'to' : 'from'
-  } ${tcrTitle}. Verify it for a chance to win ${depositETH} #ETH
-      \n\nListing: ${shortenedLink}`
+  } ${tcrTitle}, a list in ${
+    networks[network.chainId].name
+  }. Verify it for a chance to win ${depositETH} #${
+    networks[network.chainId].currency
+  }\n\nListing: ${shortenedLink}`
 
   console.info(message)
-
-  if (twitterClient) {
-    const tweet = await twitterClient.post('statuses/update', {
-      status: message
-    })
-
-    await db.put(`${network.chainId}-${tcr.address}-${_itemID}`, tweet.id_str)
-  }
+  // there is no tweetID because this is the first message, so it's null
+  await submitTweet(
+    null,
+    message,
+    db,
+    twitterClient,
+    `${network.chainId}-${tcr.address}-${_itemID}`
+  )
 }

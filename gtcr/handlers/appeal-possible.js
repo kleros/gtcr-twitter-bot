@@ -1,6 +1,9 @@
 const ethers = require('ethers')
 const _GeneralizedTCR = require('../../abis/GeneralizedTCR.json')
+const { dbAttempt } = require('../../utils/db-attempt')
 const { GTCRS } = require('../../utils/enums')
+const { networks } = require('../../utils/networks')
+const { submitTweet } = require('../../utils/submit-tweet')
 
 module.exports = ({
   twitterClient,
@@ -26,22 +29,25 @@ module.exports = ({
   )
 
   const [shortenedLink, tweetID] = await Promise.all([
-    bitly.shorten(`${process.env.GTCR_UI_URL}/tcr/${tcr.address}/${itemID}`),
-    db.get(`${network.chainId}-${tcr.address}-${itemID}`)
+    bitly.shorten(
+      `${process.env.GTCR_UI_URL}/tcr/${network.chainId}/${tcr.address}/${itemID}`
+    ),
+    dbAttempt(`${network.chainId}-${tcr.address}-${itemID}`, db)
   ])
 
-  const message = `The arbitrator gave an appealable ruling. Think it is incorrect? Contribute appeal fees for a chance to earn the opponent's stake!
+  const message = `The arbitrator gave an appealable ruling to a dispute in ${
+    networks[network.chainId].name
+  }.
+    \nThink it is incorrect? Contribute appeal fees for a chance to earn the opponent's stake!
     \n\nListing: ${shortenedLink}`
 
   console.info(message)
 
-  if (twitterClient) {
-    const tweet = await twitterClient.post('statuses/update', {
-      status: message,
-      in_reply_to_status_id: tweetID,
-      auto_populate_reply_metadata: true
-    })
-
-    await db.put(`${network.chainId}-${tcr.address}-${itemID}`, tweet.id_str)
-  }
+  await submitTweet(
+    tweetID,
+    message,
+    db,
+    twitterClient,
+    `${network.chainId}-${tcr.address}-${itemID}`
+  )
 }

@@ -52,7 +52,15 @@ async function addTCRListeners({
   ).json()
 
   // Fetch TCR data.
-  const data = await gtcrView.fetchArbitrable(tcr.address)
+  let data
+  try {
+    data = await gtcrView.fetchArbitrable(tcr.address)
+  } catch (err) {
+    console.warn(`Error fetching arbitrable data for TCR @ ${tcr.address}`, err)
+    console.warn(`This TCR will not be tracked by the bot.`)
+    return
+  }
+
   const tcrArbitrableData = {
     ...data,
     formattedEthValues: {
@@ -149,6 +157,7 @@ async function addTCRListeners({
     tcr.filters.HasPaidAppealFee(),
     paidFeesHandler({ tcr, twitterClient, bitly, db, network })
   )
+
   console.info(`Done fetching and setting up listeners for ${tcr.address}`)
 }
 
