@@ -22,7 +22,9 @@ const submitTweet = async (tweetID, message, db, twitterClient, key) => {
         console.error(err)
       }
 
-    await db.put(key, tweet.id_str)
+    if (tweet) {
+      await db.put(key, tweet.id_str)
+    }
   }
 }
 
