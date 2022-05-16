@@ -1,6 +1,7 @@
 const ethers = require('ethers')
 const _GeneralizedTCR = require('../../abis/GeneralizedTCR.json')
 const { GTCRS } = require('../../utils/enums')
+const { networks } = require('../../utils/networks')
 
 module.exports = ({
   twitterClient,
@@ -32,7 +33,10 @@ module.exports = ({
     db.get(`${network.chainId}-${tcr.address}-${itemID}`)
   ])
 
-  const message = `The arbitrator gave an appealable ruling. Think it is incorrect? Contribute appeal fees for a chance to earn the opponent's stake!
+  const message = `The arbitrator gave an appealable ruling to a dispute in ${
+    networks[network.chainId].name
+  }.
+    \nThink it is incorrect? Contribute appeal fees for a chance to earn the opponent's stake!
     \n\nListing: ${shortenedLink}`
 
   console.info(message)

@@ -1,7 +1,8 @@
 const delay = require('delay')
 
-const { truncateETHAddress } = require('../../utils/string')
+const { articleFor, truncateETHAddress } = require('../../utils/string')
 const { ITEM_STATUS } = require('../../utils/enums')
+const { networks } = require('../../utils/networks')
 
 module.exports = ({
   tcr,
@@ -42,9 +43,9 @@ module.exports = ({
     party
   )} on the ${
     status === ITEM_STATUS.REMOVAL_REQUESTED ? 'removal request' : 'submission'
-  } of ${itemName} ${
+  } of ${articleFor(itemName)} ${itemName} ${
     status === ITEM_STATUS.REMOVAL_REQUESTED ? 'from the' : 'to the'
-  } ${tcrTitle} List.
+  } ${tcrTitle} List in ${networks[network.chainId].name}.
       \n\nListing: ${shortenedLink}`
 
   console.info(message)

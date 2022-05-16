@@ -1,5 +1,6 @@
 const { ITEM_STATUS } = require('../../utils/enums')
 const { capitalizeFirstLetter } = require('../../utils/string')
+const { networks } = require('../../utils/networks')
 
 module.exports = ({
   tcr,
@@ -26,7 +27,9 @@ module.exports = ({
 
   const message = `${capitalizeFirstLetter(itemName)} ${
     status === ITEM_STATUS.REGISTERED ? 'listed on' : 'rejected from'
-  } ${tcrTitle}. If you contributed appeal fees to the winner you may have claimable rewards.
+  } ${tcrTitle}, a list in ${
+    networks[network.chainId].name
+  }. If you contributed appeal fees to the winner you may have claimable rewards.
     \n\nListing: ${shortenedLink}`
 
   if (twitterClient) {

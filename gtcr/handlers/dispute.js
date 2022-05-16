@@ -2,9 +2,10 @@ const _IArbitrator = require('../../abis/IArbitrator.json')
 const ethers = require('ethers')
 
 const { ITEM_STATUS, ARBITRATORS } = require('../../utils/enums')
-const { truncateETHValue, articleFor } = require('../../utils/string')
+const { truncateETHValue, articleFor, capitalizeFirstLetter } = require('../../utils/string')
 const appealPossibleHandler = require('./appeal-possible')
 const appealDecisionHandler = require('./appeal-decision')
+const { networks } = require('../../utils/networks')
 
 const {
   utils: { getAddress }
@@ -50,12 +51,14 @@ module.exports = ({
       ? Number(submissionBaseDeposit) + Number(submissionChallengeBaseDeposit)
       : Number(removalBaseDeposit) + Number(removalChallengeBaseDeposit)
 
-  const message = `Challenge! ${articleFor(
-    itemName
-  ).toUpperCase()} ${itemName} ${
+  const message = `Challenge! ${capitalizeFirstLetter(
+    articleFor(itemName)
+  )} ${itemName} ${
     status === ITEM_STATUS.SUBMITTED ? 'submission' : 'removal'
-  } headed to court!
-      \n\nA total of ${truncateETHValue(ethAmount)} #ETH is at stake.
+  } headed to court in ${networks[network.chainId].name}!
+      \n\nA total of ${truncateETHValue(ethAmount)} #${
+    networks[network.chainId].currency
+  } is at stake.
       \n\nListing: ${shortenedLink}`
 
   if (twitterClient) {

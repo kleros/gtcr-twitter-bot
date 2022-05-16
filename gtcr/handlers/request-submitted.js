@@ -1,5 +1,6 @@
 const { articleFor, truncateETHValue } = require('../../utils/string')
 const { ITEM_STATUS } = require('../../utils/enums')
+const { networks } = require('../../utils/networks')
 
 module.exports = ({
   tcr,
@@ -27,22 +28,18 @@ module.exports = ({
       : removalBaseDeposit
   )
 
-  // eslint-disable-next-line unicorn/consistent-function-scoping
-  const networkChainName = chainId => {
-    if (chainId === 1) return 'Mainnet'
-    if (chainId === 100) return 'Gnosis'
-    if (chainId === 42) return 'Kovan'
-    return 'unknown chain'
-  }
-
-  const message = `(${networkChainName(network.chainId)}) \n\nSomeone ${
+  // todo itemName could make message too large
+  const message = `Someone ${
     _requestType === ITEM_STATUS.SUBMITTED
       ? 'submitted'
       : 'requested the removal of'
   } ${articleFor(itemName)} ${itemName} ${
     _requestType === ITEM_STATUS.SUBMITTED ? 'to' : 'from'
-  } ${tcrTitle}. Verify it for a chance to win ${depositETH} #ETH
-      \n\nListing: ${shortenedLink}`
+  } ${tcrTitle}, a list in ${
+    networks[network.chainId].name
+  }. Verify it for a chance to win ${depositETH} #${
+    networks[network.chainId].currency
+  }\n\nListing: ${shortenedLink}`
 
   console.info(message)
 
