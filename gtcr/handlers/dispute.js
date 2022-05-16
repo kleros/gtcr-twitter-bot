@@ -2,10 +2,16 @@ const _IArbitrator = require('../../abis/IArbitrator.json')
 const ethers = require('ethers')
 
 const { ITEM_STATUS, ARBITRATORS } = require('../../utils/enums')
-const { truncateETHValue, articleFor, capitalizeFirstLetter } = require('../../utils/string')
+const {
+  truncateETHValue,
+  articleFor,
+  capitalizeFirstLetter
+} = require('../../utils/string')
 const appealPossibleHandler = require('./appeal-possible')
 const appealDecisionHandler = require('./appeal-decision')
 const { networks } = require('../../utils/networks')
+const { dbAttempt } = require('../../utils/db-attempt')
+const { submitTweet } = require('../../utils/submit-tweet')
 
 const {
   utils: { getAddress }
@@ -43,7 +49,7 @@ module.exports = ({
       `${process.env.GTCR_UI_URL}/tcr/${network.chainId}/${tcr.address}/${itemID}`
     ),
     tcr.getItemInfo(itemID),
-    db.get(`${network.chainId}-${tcr.address}-${itemID}`)
+    dbAttempt(`${network.chainId}-${tcr.address}-${itemID}`, db)
   ])
   const { status } = itemInfo
   const ethAmount =
@@ -61,15 +67,13 @@ module.exports = ({
   } is at stake.
       \n\nListing: ${shortenedLink}`
 
-  if (twitterClient) {
-    const tweet = await twitterClient.post('statuses/update', {
-      status: message,
-      in_reply_to_status_id: tweetID,
-      auto_populate_reply_metadata: true
-    })
-
-    await db.put(`${network.chainId}-${tcr.address}-${itemID}`, tweet.id_str)
-  }
+  await submitTweet(
+    tweetID,
+    message,
+    db,
+    twitterClient,
+    `${network.chainId}-${tcr.address}-${itemID}`
+  )
 
   const checksummedArbitratorAddr = getAddress(arbitratorAddress)
   let arbitrators = {}

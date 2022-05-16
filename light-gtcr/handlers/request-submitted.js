@@ -2,6 +2,8 @@ const fetch = require('node-fetch')
 const delay = require('delay')
 
 const { articleFor, truncateETHValue } = require('../../utils/string')
+const { submitTweet } = require('../../utils/submit-tweet')
+const { networks } = require('../../utils/networks')
 
 module.exports = ({
   tcr,
@@ -54,30 +56,27 @@ module.exports = ({
       : removalBaseDeposit
   )
 
-  // eslint-disable-next-line unicorn/consistent-function-scoping
-  const networkChainName = chainId => {
-    if (chainId === 1) return 'Mainnet'
-    if (chainId === 100) return 'Gnosis'
-    if (chainId === 42) return 'Kovan'
-    return 'unknown chain'
-  }
-
-  const message = `(${networkChainName(network.chainId)}) \n\nSomeone ${
+  // todo itemName could make message too large
+  const message = `Someone ${
     requestType === 'RegistrationRequested'
       ? 'submitted'
       : 'requested the removal of'
   } ${articleFor(itemName)} ${itemName} ${
     requestType === 'RegistrationRequested' ? 'to' : 'from'
-  } ${tcrTitle}. Verify it for a chance to win ${depositETH} #ETH
-      \n\nListing: ${shortenedLink}`
+  } ${tcrTitle}, a list in ${
+    networks[network.chainId].name
+  }. Verify it for a chance to win ${depositETH} #${
+    networks[network.chainId].currency
+  }\n\nListing: ${shortenedLink}`
 
   console.info(message)
 
-  if (twitterClient) {
-    const tweet = await twitterClient.post('statuses/update', {
-      status: message
-    })
-
-    await db.put(`${network.chainId}-${tcr.address}-${_itemID}`, tweet.id_str)
-  }
+  // there is no tweetID because this is the first message, so it's null
+  await submitTweet(
+    null,
+    message,
+    db,
+    twitterClient,
+    `${network.chainId}-${tcr.address}-${_itemID}`
+  )
 }

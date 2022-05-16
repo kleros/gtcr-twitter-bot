@@ -162,6 +162,8 @@ async function addTCRListeners({
     })
   )
 
+  // todo add "paid-fees" handler
+
   console.info(`Done fetching and setting up listeners for ${tcr.address}`)
 }
 

@@ -1,4 +1,6 @@
+const { dbAttempt } = require('../../utils/db-attempt')
 const { PARTY } = require('../../utils/enums')
+const { submitTweet } = require('../../utils/submit-tweet')
 
 module.exports = ({ tcr, twitterClient, bitly, db, network }) => async (
   itemID,
@@ -10,7 +12,7 @@ module.exports = ({ tcr, twitterClient, bitly, db, network }) => async (
     bitly.shorten(
       `${process.env.GTCR_UI_URL}/tcr/${network.chainId}/${tcr.address}/${itemID}`
     ),
-    db.get(`${network.chainId}-${tcr.address}-${itemID}`)
+    dbAttempt(`${network.chainId}-${tcr.address}-${itemID}`, db)
   ])
 
   const message = `The ${
@@ -22,13 +24,11 @@ module.exports = ({ tcr, twitterClient, bitly, db, network }) => async (
 
   console.info(message)
 
-  if (twitterClient) {
-    const tweet = await twitterClient.post('statuses/update', {
-      status: message,
-      in_reply_to_status_id: tweetID,
-      auto_populate_reply_metadata: true
-    })
-
-    await db.put(`${network.chainId}-${tcr.address}-${itemID}`, tweet.id_str)
-  }
+  await submitTweet(
+    tweetID,
+    message,
+    db,
+    twitterClient,
+    `${network.chainId}-${tcr.address}-${itemID}`
+  )
 }

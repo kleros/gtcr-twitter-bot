@@ -1,6 +1,8 @@
 const { ITEM_STATUS } = require('../../utils/enums')
 const { capitalizeFirstLetter } = require('../../utils/string')
 const { networks } = require('../../utils/networks')
+const { dbAttempt } = require('../../utils/db-attempt')
+const { submitTweet } = require('../../utils/submit-tweet')
 
 module.exports = ({
   tcr,
@@ -20,7 +22,7 @@ module.exports = ({
       `${process.env.GTCR_UI_URL}/tcr/${network.chainId}/${tcr.address}/${_itemID}`
     ),
     tcr.getItemInfo(_itemID),
-    db.get(`${network.chainId}-${tcr.address}-${_itemID}`)
+    dbAttempt(`${network.chainId}-${tcr.address}-${_itemID}`, db)
   ])
 
   const { status } = itemInfo
@@ -33,13 +35,11 @@ module.exports = ({
 
   console.info(message)
 
-  if (twitterClient) {
-    const tweet = await twitterClient.post('statuses/update', {
-      status: message,
-      in_reply_to_status_id: tweetID,
-      auto_populate_reply_metadata: true
-    })
-
-    await db.put(`${network.chainId}-${tcr.address}-${_itemID}`, tweet.id_str)
-  }
+  await submitTweet(
+    tweetID,
+    message,
+    db,
+    twitterClient,
+    `${network.chainId}-${tcr.address}-${_itemID}`
+  )
 }
