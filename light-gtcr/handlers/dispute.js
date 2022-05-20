@@ -43,14 +43,20 @@ module.exports = ({
       removalChallengeBaseDeposit
     }
   } = tcrArbitrableData
-
+  console.log('Debugging deposits inside dispute handler', {
+    submissionBaseDeposit,
+    submissionChallengeBaseDeposit,
+    removalBaseDeposit,
+    removalChallengeBaseDeposit
+  })
   const itemInfo = await tcr.getItemInfo(itemID)
   const { status } = itemInfo
+  console.log('Debugging status in dispute handler', { status, itemInfo })
   const ethAmount =
     status === ITEM_STATUS.SUBMITTED
       ? Number(submissionBaseDeposit) + Number(submissionChallengeBaseDeposit)
       : Number(removalBaseDeposit) + Number(removalChallengeBaseDeposit)
-
+  console.log('Debugging ethAmount', { ethAmount })
   const [shortenedLink, tweetID] = await Promise.all([
     bitly.shorten(
       `${process.env.GTCR_UI_URL}/tcr/${network.chainId}/${tcr.address}/${itemID}`
