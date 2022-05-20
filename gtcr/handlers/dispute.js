@@ -36,12 +36,7 @@ module.exports = ({
     metadata: { itemName }
   } = tcrMetaEvidence
   const {
-    formattedEthValues: {
-      submissionBaseDeposit,
-      submissionChallengeBaseDeposit,
-      removalBaseDeposit,
-      removalChallengeBaseDeposit
-    }
+    formattedEthValues: { submissionBaseDeposit, removalBaseDeposit }
   } = tcrArbitrableData
 
   const [shortenedLink, itemInfo, tweetID] = await Promise.all([
@@ -52,17 +47,19 @@ module.exports = ({
     dbAttempt(`${network.chainId}-${tcr.address}-${itemID}`, db)
   ])
   const { status } = itemInfo
-  const ethAmount =
+
+  const ethAmount = truncateETHValue(
     status === ITEM_STATUS.SUBMITTED
-      ? Number(submissionBaseDeposit) + Number(submissionChallengeBaseDeposit)
-      : Number(removalBaseDeposit) + Number(removalChallengeBaseDeposit)
+      ? submissionBaseDeposit
+      : removalBaseDeposit
+  )
 
   const message = `Challenge! ${capitalizeFirstLetter(
     articleFor(itemName)
   )} ${itemName} ${
     status === ITEM_STATUS.SUBMITTED ? 'submission' : 'removal'
   } headed to court in ${networks[network.chainId].name}!
-      \n\nA total of ${truncateETHValue(ethAmount)} #${
+      \n\nA total of ${ethAmount} #${
     networks[network.chainId].currency
   } is at stake.
       \n\nListing: ${shortenedLink}`

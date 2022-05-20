@@ -36,20 +36,16 @@ module.exports = ({
     metadata: { itemName }
   } = tcrMetaEvidence
   const {
-    formattedEthValues: {
-      submissionBaseDeposit,
-      submissionChallengeBaseDeposit,
-      removalBaseDeposit,
-      removalChallengeBaseDeposit
-    }
+    formattedEthValues: { submissionBaseDeposit, removalBaseDeposit }
   } = tcrArbitrableData
 
   const itemInfo = await tcr.getItemInfo(itemID)
   const { status } = itemInfo
-  const ethAmount =
+  const ethAmount = truncateETHValue(
     status === ITEM_STATUS.SUBMITTED
-      ? Number(submissionBaseDeposit) + Number(submissionChallengeBaseDeposit)
-      : Number(removalBaseDeposit) + Number(removalChallengeBaseDeposit)
+      ? submissionBaseDeposit
+      : removalBaseDeposit
+  )
 
   const [shortenedLink, tweetID] = await Promise.all([
     bitly.shorten(
@@ -63,7 +59,7 @@ module.exports = ({
   )} ${itemName} ${
     status === ITEM_STATUS.SUBMITTED ? 'submission' : 'removal'
   } headed to court in ${networks[network.chainId].name}!
-      \n\nA total of ${truncateETHValue(ethAmount)} #${
+      \n\nA total of ${ethAmount} #${
     networks[network.chainId].currency
   } is at stake.
       \n\nListing: ${shortenedLink}`
