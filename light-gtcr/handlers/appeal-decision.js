@@ -2,6 +2,7 @@ const ethers = require('ethers')
 const _LightGeneralizedTCR = require('../../abis/LightGeneralizedTCR.json')
 const { dbAttempt } = require('../../utils/db-attempt')
 const { LGTCRS } = require('../../utils/enums')
+const { mainListFilter } = require('../../utils/main-list-filter')
 const { networks } = require('../../utils/networks')
 const { submitTweet } = require('../../utils/submit-tweet')
 
@@ -23,6 +24,13 @@ module.exports = ({
   if (!lgtcrs[_arbitrable.toLowerCase()]) return // Event not related to a light-gtcr.
 
   const tcr = new ethers.Contract(_arbitrable, _LightGeneralizedTCR, provider)
+
+  const isRelevant = await mainListFilter(network.chainId, tcr.address)
+  if (!isRelevant) {
+    console.log('Irrelevant interaction, ignoring...')
+    return
+  }
+
   let itemID
   try {
     itemID = await tcr.arbitratorDisputeIDToItemID(

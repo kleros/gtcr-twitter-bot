@@ -1,5 +1,6 @@
 const { dbAttempt } = require('../../utils/db-attempt')
 const { PARTY } = require('../../utils/enums')
+const { mainListFilter } = require('../../utils/main-list-filter')
 const { submitTweet } = require('../../utils/submit-tweet')
 
 module.exports = ({ tcr, twitterClient, bitly, db, network }) => async (
@@ -8,6 +9,12 @@ module.exports = ({ tcr, twitterClient, bitly, db, network }) => async (
   _round,
   side
 ) => {
+  const isRelevant = await mainListFilter(network.chainId, tcr.address)
+  if (!isRelevant) {
+    console.log('Irrelevant interaction, ignoring...')
+    return
+  }
+
   const [shortenedLink, tweetID] = await Promise.all([
     bitly.shorten(
       `${process.env.GTCR_UI_URL}/tcr/${network.chainId}/${tcr.address}/${itemID}`

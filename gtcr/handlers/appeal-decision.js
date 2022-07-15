@@ -2,6 +2,7 @@ const ethers = require('ethers')
 const _GeneralizedTCR = require('../../abis/GeneralizedTCR.json')
 const { dbAttempt } = require('../../utils/db-attempt')
 const { GTCRS } = require('../../utils/enums')
+const { mainListFilter } = require('../../utils/main-list-filter')
 const { networks } = require('../../utils/networks')
 const { submitTweet } = require('../../utils/submit-tweet')
 
@@ -24,6 +25,13 @@ module.exports = ({
   if (!gtcrs[_arbitrable.toLowerCase()]) return // Event not related to a gtcr.
 
   const tcr = new ethers.Contract(_arbitrable, _GeneralizedTCR, provider)
+
+  const isRelevant = await mainListFilter(network.chainId, tcr.address)
+  if (!isRelevant) {
+    console.log('Irrelevant interaction, ignoring...')
+    return
+  }
+
   const itemID = await tcr.arbitratorDisputeIDToItem(
     arbitrator.address,
     Number(_disputeID)

@@ -1,5 +1,6 @@
 const { dbAttempt } = require('../../utils/db-attempt')
 const { ITEM_STATUS } = require('../../utils/enums')
+const { mainListFilter } = require('../../utils/main-list-filter')
 const { networks } = require('../../utils/networks')
 const { capitalizeFirstLetter } = require('../../utils/string')
 const { submitTweet } = require('../../utils/submit-tweet')
@@ -12,6 +13,12 @@ module.exports = ({
   db,
   network
 }) => async (_arbitrator, _disputeID, _ruling) => {
+  const isRelevant = await mainListFilter(network.chainId, tcr.address)
+  if (!isRelevant) {
+    console.log('Irrelevant interaction, ignoring...')
+    return
+  }
+
   const itemID = await tcr.arbitratorDisputeIDToItemID(_arbitrator, _disputeID)
 
   const {

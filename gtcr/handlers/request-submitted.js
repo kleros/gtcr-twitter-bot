@@ -2,6 +2,7 @@ const { articleFor, truncateETHValue } = require('../../utils/string')
 const { ITEM_STATUS } = require('../../utils/enums')
 const { networks } = require('../../utils/networks')
 const { submitTweet } = require('../../utils/submit-tweet')
+const { mainListFilter } = require('../../utils/main-list-filter')
 
 module.exports = ({
   tcr,
@@ -12,6 +13,12 @@ module.exports = ({
   db,
   network
 }) => async (_itemID, _submitter, _requestType) => {
+  const isRelevant = await mainListFilter(network.chainId, tcr.address)
+  if (!isRelevant) {
+    console.log('Irrelevant interaction, ignoring...')
+    return
+  }
+
   const {
     metadata: { itemName, tcrTitle }
   } = tcrMetaEvidence

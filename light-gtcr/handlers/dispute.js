@@ -12,6 +12,7 @@ const appealDecisionHandler = require('./appeal-decision')
 const { dbAttempt } = require('../../utils/db-attempt')
 const { submitTweet } = require('../../utils/submit-tweet')
 const { networks } = require('../../utils/networks')
+const { mainListFilter } = require('../../utils/main-list-filter')
 
 const {
   utils: { getAddress }
@@ -27,6 +28,12 @@ module.exports = ({
   network,
   provider
 }) => async (arbitratorAddress, disputeID) => {
+  const isRelevant = await mainListFilter(network.chainId, tcr.address)
+  if (!isRelevant) {
+    console.log('Irrelevant interaction, ignoring...')
+    return
+  }
+
   const itemID = await tcr.arbitratorDisputeIDToItemID(
     arbitratorAddress,
     disputeID
