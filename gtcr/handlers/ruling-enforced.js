@@ -3,6 +3,7 @@ const { capitalizeFirstLetter } = require('../../utils/string')
 const { networks } = require('../../utils/networks')
 const { dbAttempt } = require('../../utils/db-attempt')
 const { submitTweet } = require('../../utils/submit-tweet')
+const { mainListFilter } = require('../../utils/main-list-filter')
 
 module.exports = ({
   tcr,
@@ -12,6 +13,12 @@ module.exports = ({
   db,
   network
 }) => async (_arbitrator, _disputeID, _ruling) => {
+  const isRelevant = await mainListFilter(network.chainId, tcr.address)
+  if (!isRelevant) {
+    console.log('Irrelevant interaction, ignoring...')
+    return
+  }
+
   const itemID = await tcr.arbitratorDisputeIDToItem(_arbitrator, _disputeID)
 
   const {

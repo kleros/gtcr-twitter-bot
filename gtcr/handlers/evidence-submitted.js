@@ -5,6 +5,7 @@ const { ITEM_STATUS } = require('../../utils/enums')
 const { networks } = require('../../utils/networks')
 const { dbAttempt } = require('../../utils/db-attempt')
 const { submitTweet } = require('../../utils/submit-tweet')
+const { mainListFilter } = require('../../utils/main-list-filter')
 
 module.exports = ({
   tcr,
@@ -15,6 +16,12 @@ module.exports = ({
   network,
   provider
 }) => async (_arbitrator, evidenceGroupID, party) => {
+  const isRelevant = await mainListFilter(network.chainId, tcr.address)
+  if (!isRelevant) {
+    console.log('Irrelevant interaction, ignoring...')
+    return
+  }
+
   // When someone challenges a request with evidence, two handlers would
   // be dispatched simultaneously (Dispute, Evidence).
   // Which can result in the key not being found depending if the

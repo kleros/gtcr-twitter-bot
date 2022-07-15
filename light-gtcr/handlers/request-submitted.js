@@ -4,6 +4,7 @@ const delay = require('delay')
 const { articleFor, truncateETHValue } = require('../../utils/string')
 const { submitTweet } = require('../../utils/submit-tweet')
 const { networks } = require('../../utils/networks')
+const { mainListFilter } = require('../../utils/main-list-filter')
 
 module.exports = ({
   tcr,
@@ -14,6 +15,12 @@ module.exports = ({
   db,
   network
 }) => async (_itemID, _evidenceGroupID) => {
+  const isRelevant = await mainListFilter(network.chainId, tcr.address)
+  if (!isRelevant) {
+    console.log('Irrelevant interaction, ignoring...')
+    return
+  }
+
   const {
     metadata: { itemName, tcrTitle }
   } = tcrMetaEvidence

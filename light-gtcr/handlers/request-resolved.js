@@ -6,6 +6,7 @@ const { capitalizeFirstLetter } = require('../../utils/string')
 const { dbAttempt } = require('../../utils/db-attempt')
 const { submitTweet } = require('../../utils/submit-tweet')
 const { networks } = require('../../utils/networks')
+const { mainListFilter } = require('../../utils/main-list-filter')
 
 module.exports = ({
   tcr,
@@ -15,6 +16,12 @@ module.exports = ({
   db,
   network
 }) => async _itemID => {
+  const isRelevant = await mainListFilter(network.chainId, tcr.address)
+  if (!isRelevant) {
+    console.log('Irrelevant interaction, ignoring...')
+    return
+  }
+
   // Wait a bit to ensure subgraph is synced.
   await delay(20 * 1000)
 
