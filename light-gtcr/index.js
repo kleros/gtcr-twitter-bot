@@ -5,6 +5,7 @@ const _LightGeneralizedTCR = require('../abis/LightGeneralizedTCR.json')
 const _IArbitrator = require('../abis/IArbitrator.json')
 
 const { ARBITRATORS } = require('../utils/enums')
+const delay = require('delay')
 
 /**
  * Starts the twitter bot for Light Curate events.
@@ -41,6 +42,7 @@ async function bot(
   } catch (err) {
     if (err.type !== 'NotFoundError') throw new Error(err)
   }
+
   Object.keys(arbitrators)
     .map(address => new ethers.Contract(address, _IArbitrator, provider))
     .forEach(arbitrator =>
@@ -97,21 +99,20 @@ async function bot(
       address => new ethers.Contract(address, _LightGeneralizedTCR, provider)
     )
 
-  // Add listeners for events emitted by the TCRs.
-  await Promise.all(
-    tcrs.map(tcr =>
-      addTCRListeners({
-        tcr,
-        network,
-        bitly,
-        twitterClient,
-        provider,
-        deploymentBlock,
-        lightGtcrView,
-        db
-      })
-    )
-  )
+  // done in an await for loop to avoid ddosing
+  for (const tcr of tcrs) {
+    await addTCRListeners({
+      tcr,
+      network,
+      bitly,
+      twitterClient,
+      provider,
+      deploymentBlock,
+      lightGtcrView,
+      db
+    })
+    await delay(process.env.BOOT_LISTENER_DELAY_MILLISECONDS)
+  }
 
   // Watch for new TCRs and add listeners.
   lightGtcrFactory.on(lightGtcrFactory.filters.NewGTCR(), _address =>

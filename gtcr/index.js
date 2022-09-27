@@ -5,6 +5,7 @@ const _GeneralizedTCR = require('../abis/GeneralizedTCR.json')
 const _IArbitrator = require('../abis/IArbitrator.json')
 
 const { ARBITRATORS } = require('../utils/enums')
+const delay = require('delay')
 
 /**
  * Starts the twitter bot for Curate Classic events.
@@ -90,21 +91,20 @@ async function bot(provider, gtcrFactory, twitterClient, gtcrView, db, bitly) {
     .map(log => gtcrFactory.interface.parseLog(log).values._address)
     .map(address => new ethers.Contract(address, _GeneralizedTCR, provider))
 
-  // Add listeners for events emitted by the TCRs.
-  await Promise.all(
-    tcrs.map(tcr =>
-      addTCRListeners({
-        tcr,
-        network,
-        bitly,
-        twitterClient,
-        provider,
-        deploymentBlock,
-        gtcrView,
-        db
-      })
-    )
-  )
+  // done in an await for loop to avoid ddosing
+  for (const tcr of tcrs) {
+    await addTCRListeners({
+      tcr,
+      network,
+      bitly,
+      twitterClient,
+      provider,
+      deploymentBlock,
+      gtcrView,
+      db
+    })
+    await delay(process.env.BOOT_LISTENER_DELAY_MILLISECONDS)
+  }
 
   // Watch for new TCRs and add listeners.
   gtcrFactory.on(gtcrFactory.filters.NewGTCR(), _address =>

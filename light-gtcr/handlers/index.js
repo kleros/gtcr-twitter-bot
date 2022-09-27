@@ -9,6 +9,7 @@ const evidenceSubmittedHandler = require('./evidence-submitted')
 const appealPossibleHandler = require('./appeal-possible')
 const appealDecisionHandler = require('./appeal-decision')
 const { LGTCRS } = require('../../utils/enums')
+const delay = require('delay')
 
 const {
   utils: { formatEther }
@@ -106,6 +107,7 @@ async function addTCRListeners({
       network
     })
   )
+  await delay(100)
 
   // Challenges.
   tcr.on(
@@ -121,6 +123,7 @@ async function addTCRListeners({
       provider
     })
   )
+  await delay(100)
 
   // Request resolved.
   tcr.on(
@@ -134,6 +137,7 @@ async function addTCRListeners({
       network
     })
   )
+  await delay(100)
 
   // Ruling enforced.
   tcr.on(
@@ -147,6 +151,7 @@ async function addTCRListeners({
       network
     })
   )
+  await delay(100)
 
   // Evidence submission.
   tcr.on(
@@ -164,7 +169,9 @@ async function addTCRListeners({
 
   // todo add "paid-fees" handler
 
-  console.info(`Done fetching and setting up listeners for ${tcr.address}`)
+  console.info(
+    `Done fetching and setting up listeners for ${tcr.address} at chain with ID ${network.chainId}`
+  )
 }
 
 /**
@@ -178,7 +185,7 @@ async function addTCRListeners({
  * @param {object} args.network The network object. Used to not mix content from different chains on the database.
  * @param {object} args.provider The web3 provider.
  */
-function addArbitratorListeners({
+async function addArbitratorListeners({
   arbitrator,
   twitterClient,
   bitly,
@@ -197,6 +204,8 @@ function addArbitratorListeners({
       arbitrator
     })
   )
+  await delay(100)
+
   arbitrator.on(
     arbitrator.filters.AppealDecision(),
     appealDecisionHandler({
@@ -208,6 +217,7 @@ function addArbitratorListeners({
       network
     })
   )
+  await delay(100)
 
   console.info()
   console.info(`Listeners setup for arbitrator at ${arbitrator.address}`)
