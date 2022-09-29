@@ -43,9 +43,9 @@ const providerXDai = new ethers.providers.JsonRpcProvider(
 const providerKovan = new ethers.providers.JsonRpcProvider(
   providerUrls[NETWORKS.kovan]
 )
-providerMainnet.pollingInterval = 60 * 1000 // Poll every minute.
-providerXDai.pollingInterval = 60 * 1000 // Poll every minute.
-providerKovan.pollingInterval = 60 * 1000 // Poll every minute
+providerMainnet.pollingInterval = 15 * 60 * 1000 // Poll every 15 minutes.
+providerXDai.pollingInterval = 15 * 60 * 1000 // Poll every 15 minutes.
+providerKovan.pollingInterval = 15 * 60 * 1000 // Poll every 15 minutes.
 
 const factoryAddresses = JSON.parse(process.env.FACTORY_ADDRESSES)
 
