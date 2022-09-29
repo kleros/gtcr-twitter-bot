@@ -13,6 +13,9 @@ const { dbAttempt } = require('../../utils/db-attempt')
 const { submitTweet } = require('../../utils/submit-tweet')
 const { networks } = require('../../utils/networks')
 const { mainListFilter } = require('../../utils/main-list-filter')
+const {
+  getFormattedEthValues
+} = require('../../utils/get-formatted-eth-values')
 
 const {
   utils: { getAddress }
@@ -20,8 +23,8 @@ const {
 
 module.exports = ({
   tcr,
+  lightGtcrView,
   tcrMetaEvidence,
-  tcrArbitrableData,
   twitterClient,
   bitly,
   db,
@@ -42,14 +45,25 @@ module.exports = ({
   const {
     metadata: { itemName }
   } = tcrMetaEvidence
-  const {
-    formattedEthValues: {
-      submissionBaseDeposit,
-      submissionChallengeBaseDeposit,
-      removalBaseDeposit,
-      removalChallengeBaseDeposit
-    }
-  } = tcrArbitrableData
+
+  let submissionBaseDeposit,
+    submissionChallengeBaseDeposit,
+    removalBaseDeposit,
+    removalChallengeBaseDeposit
+
+  try {
+    const ethValues = await getFormattedEthValues(lightGtcrView, tcr.address)
+    submissionBaseDeposit = ethValues.submissionBaseDeposit
+    removalBaseDeposit = ethValues.removalBaseDeposit
+    submissionChallengeBaseDeposit = ethValues.submissionChallengeBaseDeposit
+    removalChallengeBaseDeposit = ethValues.removalChallengeBaseDeposit
+  } catch (err) {
+    console.error(
+      'Could not fetch ETH values, cancelling Dispute tweet in Light TCR',
+      err
+    )
+    return
+  }
 
   const itemInfo = await tcr.getItemInfo(itemID)
   const { status } = itemInfo

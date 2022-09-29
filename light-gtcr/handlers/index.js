@@ -1,5 +1,4 @@
 const fetch = require('node-fetch')
-const ethers = require('ethers')
 
 const requestSubmittedHandler = require('./request-submitted')
 const disputeHandler = require('./dispute')
@@ -10,10 +9,6 @@ const appealPossibleHandler = require('./appeal-possible')
 const appealDecisionHandler = require('./appeal-decision')
 const { LGTCRS } = require('../../utils/enums')
 const delay = require('delay')
-
-const {
-  utils: { formatEther }
-} = ethers
 
 /**
  * Add listeners to tweet on important TCR events. Additionally, adds arbitrator listeners in case of a dispute, if there isn't one already.
@@ -63,28 +58,6 @@ async function addTCRListeners({
     return
   }
 
-  // Fetch TCR data.
-  let data
-  try {
-    data = await lightGtcrView.fetchArbitrable(tcr.address)
-  } catch (err) {
-    console.warn(`Error fetching arbitrable data for TCR @ ${tcr.address}`, err)
-    console.warn(`This TCR will not be tracked by the bot.`)
-    return
-  }
-  const tcrArbitrableData = {
-    ...data,
-    formattedEthValues: {
-      // Format wei values to ETH.
-      submissionBaseDeposit: formatEther(data.submissionBaseDeposit),
-      removalBaseDeposit: formatEther(data.removalBaseDeposit),
-      submissionChallengeBaseDeposit: formatEther(
-        data.submissionChallengeBaseDeposit
-      ),
-      removalChallengeBaseDeposit: formatEther(data.removalChallengeBaseDeposit)
-    }
-  }
-
   let lgtcrs = {}
   try {
     lgtcrs = JSON.parse(await db.get(LGTCRS))
@@ -99,8 +72,8 @@ async function addTCRListeners({
     tcr.filters.RequestSubmitted(),
     requestSubmittedHandler({
       tcr,
+      lightGtcrView,
       tcrMetaEvidence,
-      tcrArbitrableData,
       twitterClient,
       bitly,
       db,
@@ -114,8 +87,8 @@ async function addTCRListeners({
     tcr.filters.Dispute(),
     disputeHandler({
       tcr,
+      lightGtcrView,
       tcrMetaEvidence,
-      tcrArbitrableData,
       twitterClient,
       bitly,
       db,

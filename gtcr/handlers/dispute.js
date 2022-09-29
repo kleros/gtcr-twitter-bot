@@ -13,6 +13,9 @@ const { networks } = require('../../utils/networks')
 const { dbAttempt } = require('../../utils/db-attempt')
 const { submitTweet } = require('../../utils/submit-tweet')
 const { mainListFilter } = require('../../utils/main-list-filter')
+const {
+  getFormattedEthValues
+} = require('../../utils/get-formatted-eth-values')
 
 const {
   utils: { getAddress }
@@ -20,8 +23,8 @@ const {
 
 module.exports = ({
   tcr,
+  gtcrView,
   tcrMetaEvidence,
-  tcrArbitrableData,
   twitterClient,
   bitly,
   db,
@@ -42,14 +45,25 @@ module.exports = ({
   const {
     metadata: { itemName }
   } = tcrMetaEvidence
-  const {
-    formattedEthValues: {
-      submissionBaseDeposit,
-      submissionChallengeBaseDeposit,
-      removalBaseDeposit,
-      removalChallengeBaseDeposit
-    }
-  } = tcrArbitrableData
+
+  let submissionBaseDeposit,
+    submissionChallengeBaseDeposit,
+    removalBaseDeposit,
+    removalChallengeBaseDeposit
+
+  try {
+    const ethValues = await getFormattedEthValues(gtcrView, tcr.address)
+    submissionBaseDeposit = ethValues.submissionBaseDeposit
+    removalBaseDeposit = ethValues.removalBaseDeposit
+    submissionChallengeBaseDeposit = ethValues.submissionChallengeBaseDeposit
+    removalChallengeBaseDeposit = ethValues.removalChallengeBaseDeposit
+  } catch (err) {
+    console.error(
+      'Could not fetch ETH values, cancelling Dispute tweet in Classic TCR',
+      err
+    )
+    return
+  }
 
   const [shortenedLink, itemInfo, tweetID] = await Promise.all([
     bitly.shorten(

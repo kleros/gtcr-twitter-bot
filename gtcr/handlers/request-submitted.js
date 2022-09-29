@@ -3,11 +3,14 @@ const { ITEM_STATUS } = require('../../utils/enums')
 const { networks } = require('../../utils/networks')
 const { submitTweet } = require('../../utils/submit-tweet')
 const { mainListFilter } = require('../../utils/main-list-filter')
+const {
+  getFormattedEthValues
+} = require('../../utils/get-formatted-eth-values')
 
 module.exports = ({
   tcr,
+  gtcrView,
   tcrMetaEvidence,
-  tcrArbitrableData,
   twitterClient,
   bitly,
   db,
@@ -22,9 +25,19 @@ module.exports = ({
   const {
     metadata: { itemName, tcrTitle }
   } = tcrMetaEvidence
-  const {
-    formattedEthValues: { submissionBaseDeposit, removalBaseDeposit }
-  } = tcrArbitrableData
+
+  let submissionBaseDeposit, removalBaseDeposit
+  try {
+    const ethValues = await getFormattedEthValues(gtcrView, tcr.address)
+    submissionBaseDeposit = ethValues.submissionBaseDeposit
+    removalBaseDeposit = ethValues.removalBaseDeposit
+  } catch (err) {
+    console.error(
+      'Could not fetch ETH values, cancelling Request Submitted tweet in Classic TCR',
+      err
+    )
+    return
+  }
 
   const shortenedLink = await bitly.shorten(
     `${process.env.GTCR_UI_URL}/tcr/${network.chainId}/${tcr.address}/${_itemID}`
