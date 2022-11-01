@@ -19,7 +19,7 @@
     "ethereum-checksum-address": "^0.0.8",
     "ethers": "^4.0.44",
     "level": "^6.0.0",
-    "node-fetch": "^2.6.1",
+    "node-fetch": "^2.6.7",
     "twitter-lite": "^0.9.4"
   },
   "devDependencies": {
