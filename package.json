@@ -16,6 +16,7 @@
   "dependencies": {
     "delay": "^5.0.0",
     "dotenv-safe": "^8.2.0",
+    "ethereum-checksum-address": "^0.0.8",
     "ethers": "^4.0.44",
     "level": "^6.0.0",
     "node-fetch": "^2.6.1",
