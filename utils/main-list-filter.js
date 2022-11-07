@@ -19,7 +19,7 @@ const getIncluderList = async (subgraphEndpoint, tcr) => {
         registryAddress
       }
 
-      itemProps(where: {type: "GTCR address", value: "${toChecksumAddress(
+      itemProps(where: {item_: {status_in: [Registered, ClearingRequested]}, type: "GTCR address", value: "${toChecksumAddress(
         tcr
       )}"}) {
         item {
