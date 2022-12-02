@@ -1,3 +1,7 @@
+## :warning: DEPRECATED, REPLACED BY [kleros/curate-twitter-bot](https://github.com/kleros/curate-twitter-bot)
+
+<br/>
+
 <p align="center">
   <b style="font-size: 32px;">GTCR Twitter Bot </b>
 </p>
